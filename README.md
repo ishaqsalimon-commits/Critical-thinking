@@ -1519,32 +1519,24 @@ Before resolving merge conflicts, ensure your local repository is up to date.
 
 Check your current working state:
 
-```bash
 git status
 git branch --show-current
-```
 
 If you have uncommitted changes, commit or safely stash them before continuing.
 
 Fetch the latest changes from the remote repository:
 
-```bash
 git fetch origin
-```
 
 Update the local `main` branch:
 
-```bash
 git switch main
 git pull --ff-only origin main
-```
 
 Switch back to your feature branch and merge the latest changes:
 
-```bash
 git switch feature/login
 git merge main
-```
 
 If Git detects conflicts, it will stop the merge and identify the affected files.
 
@@ -1552,10 +1544,8 @@ If Git detects conflicts, it will stop the merge and identify the affected files
 
 Use the following commands to identify files with unresolved conflicts:
 
-```bash
 git status
 git diff --name-only --diff-filter=U
-```
 
 Git may report conflicts when two branches modify the same lines or make incompatible changes to the same file.
 
