@@ -1510,3 +1510,209 @@ After completing the task, the team should have:
 Git merge conflicts are a common challenge in collaborative software development. They can be resolved by inspecting the repository state, identifying conflicting changes, agreeing on the correct implementation, and testing the resulting code.
 
 To prevent future issues, the team should use feature branches, pull requests, code reviews, branch protection, and automated testing. These practices help maintain code integrity and ensure that only verified changes are integrated into the main branch.
+
+## Git Merge Conflict Resolution and Prevention Workflow
+
+## 1. Pull the Latest Code
+
+Before resolving merge conflicts, ensure your local repository is up to date.
+
+Check your current working state:
+
+```bash
+git status
+git branch --show-current
+```
+
+If you have uncommitted changes, commit or safely stash them before continuing.
+
+Fetch the latest changes from the remote repository:
+
+```bash
+git fetch origin
+```
+
+Update the local `main` branch:
+
+```bash
+git switch main
+git pull --ff-only origin main
+```
+
+Switch back to your feature branch and merge the latest changes:
+
+```bash
+git switch feature/login
+git merge main
+```
+
+If Git detects conflicts, it will stop the merge and identify the affected files.
+
+## 2. Identify Conflicting Files
+
+Use the following commands to identify files with unresolved conflicts:
+
+```bash
+git status
+git diff --name-only --diff-filter=U
+```
+
+Git may report conflicts when two branches modify the same lines or make incompatible changes to the same file.
+
+## 3. Resolve the Merge Conflicts
+
+Open each conflicting file in your editor. Git marks conflicting sections with special markers.
+
+Example:
+
+```javascript
+<<<<<<< HEAD
+const apiUrl = "https://api.example.com/v1";
+=======
+const apiUrl = "https://api.example.com/v2";
+>>>>>>> main
+```
+
+The markers indicate the competing changes:
+
+- `<<<<<<< HEAD`: The version in your current branch.
+- `=======`: Separates the two versions.
+- `>>>>>>> main`: The incoming version from `main`.
+
+Review both versions and determine which changes should be retained. Depending on the requirements, you may keep one version or combine both.
+
+For example, the resolved code could be:
+
+```javascript
+const apiUrl = "https://api.example.com/v2";
+```
+
+Remove all conflict markers and save the file.
+
+Stage the resolved file:
+
+```bash
+git add src/config.js
+```
+
+Repeat this process for every conflicting file.
+
+Verify that no unresolved conflicts remain:
+
+```bash
+git diff --name-only --diff-filter=U
+git status
+```
+
+The first command should return no output when all conflicts are resolved.
+
+## 4. Test and Complete the Merge
+
+Review the staged changes:
+
+```bash
+git diff --cached
+```
+
+Run the project's tests, linting, and build commands. For example, in a Node.js project:
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+Use the commands configured for your project.
+
+If the checks pass, complete the merge:
+
+```bash
+git commit -m "Merge main into feature/login and resolve conflicts"
+```
+
+Push the updated feature branch:
+
+```bash
+git push origin feature/login
+```
+
+Update the pull request and obtain the required reviews and CI approvals before merging it into `main`.
+
+If you need to abandon a merge before committing, run:
+
+```bash
+git merge --abort
+```
+
+This command is intended for an active merge that you want to cancel.
+
+## 5. Update the Team's Git Workflow
+
+To reduce future merge conflicts, introduce the following practices.
+
+### A. Improve Team Communication
+
+- Communicate planned changes to shared files before development.
+- Coordinate work on shared components, configuration files, and API contracts.
+- Notify teammates when changes may affect their branches.
+- Document decisions about shared interfaces and dependencies.
+
+### B. Create Smaller, More Frequent Pull Requests
+
+- Break large features into smaller, independent changes.
+- Keep each pull request focused on one logical task.
+- Review and merge completed pull requests promptly.
+- Avoid maintaining long-running feature branches.
+
+### C. Synchronize Branches Frequently
+
+- Fetch the latest changes regularly.
+- Integrate the latest base-branch changes before opening a pull request.
+- Resolve conflicts as soon as they appear.
+- Recheck the base branch before merging if it has advanced.
+
+Example:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+Run this command from your feature branch after fetching the latest remote changes.
+
+### D. Automate Quality Checks
+
+- Configure continuous integration (CI) to run tests, linting, and builds.
+- Protect the `main` branch with required pull request reviews.
+- Require successful CI checks before merging.
+- Require branches to be up to date when appropriate.
+
+### E. Improve Code Ownership and Organization
+
+- Separate unrelated responsibilities into different modules or files.
+- Establish clear ownership for critical components.
+- Use `CODEOWNERS` where appropriate.
+- Apply consistent formatting to reduce unnecessary differences in files.
+
+## 6. Recommended Team Workflow
+
+The team should follow this checklist for each feature.
+
+1. **Before coding:** Fetch the latest code and communicate overlapping work.
+2. **During development:** Make small commits and synchronize regularly.
+3. **Before opening a pull request:** Review changes and run relevant tests.
+4. **Before merging:** Resolve conflicts, obtain required approvals, and confirm CI passes.
+5. **After merging:** Delete the merged branch and communicate any changes affecting other developers.
+
+## 7. Expected Outcome
+
+Following this process should result in:
+
+- Successful integration of the latest code.
+- Identification and resolution of all conflicting files.
+- Tested and reviewed changes before merging.
+- Improved communication between team members.
+- Smaller pull requests and shorter-lived feature branches.
+- Fewer merge conflicts and more reliable collaboration.
+
+**Conclusion:** Merge conflicts can be resolved safely by fetching the latest code, identifying conflicting files, reviewing and combining changes, and testing the result before completing the merge. Regular synchronization, clear communication, smaller pull requests, and automated checks help prevent future conflicts and improve the team's Git workflow.
