@@ -713,3 +713,524 @@ All team members are expected to follow these principles:
 10. Maintain an auditable record of changes, reviews, and releases.
 
 **Expected outcome:** The team can develop multiple features in parallel, integrate changes predictably, reduce avoidable conflicts, and maintain a stable main branch. A shared, documented process also allows distributed developers to collaborate asynchronously while preserving code quality, accountability, and delivery consistency.
+
+## Task 3: Automate Code Quality and Deployment
+
+## 1. CI/CD Integration
+
+### Objective
+
+To ensure code quality and support rapid development, a Continuous Integration/Continuous Deployment (CI/CD) pipeline will be integrated with Git. Automated tests will run whenever a new feature branch is pushed to the remote repository.
+
+### Tools Used
+
+- **Git:** Version control and branch management.
+- **GitHub:** Remote repository hosting.
+- **GitHub Actions:** Automates testing and CI/CD workflows.
+- **Automated Testing Framework:** Runs the project's test suite.
+
+### Implementation Steps
+
+#### Step 1: Create a Feature Branch
+
+Create a new branch for the feature you want to develop.
+
+git checkout -b feature/new-feature
+
+#### Step 2: Configure GitHub Actions
+
+Create a workflow file in the repository at `.github/workflows/ci.yml`.
+
+    name: CI - Automated Tests
+
+    on:
+      push:
+        branches:
+          - 'feature/**'
+      pull_request:
+        branches:
+          - main
+
+    jobs:
+      test:
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Set up Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: '3.x'
+
+          - name: Install dependencies
+            run: |
+              python -m pip install --upgrade pip
+              if [ -f requirements.txt ]; then
+                pip install -r requirements.txt
+              fi
+              pip install pytest
+
+          - name: Run automated tests
+            run: pytest
+
+**Note:** This example assumes the project uses Python and `pytest`. Replace the setup and test commands if the project uses another language or testing framework.
+
+#### Step 3: Commit and Push Changes
+
+Save the workflow file and push the feature branch to GitHub.
+
+git add .github/workflows/ci.yml
+git commit -m "Add automated CI testing workflow"
+git push -u origin feature/new-feature
+
+#### Step 4: Verify the Pipeline
+
+1. Open the repository on GitHub.
+2. Navigate to the **Actions** tab.
+3. Select the **CI - Automated Tests** workflow.
+4. Confirm that the workflow starts after the feature branch is pushed.
+5. Check the job logs to verify that dependencies are installed and tests execute successfully.
+6. Introduce a failing test in a temporary commit to confirm that the pipeline reports a failure.
+
+### Expected Results
+
+- Automated tests run whenever a feature branch matching `feature/**` is pushed.
+- Pull requests targeting `main` trigger the same test suite.
+- Test failures are reported in GitHub Actions, allowing developers to identify and fix problems early.
+- Successful test runs provide confidence in code quality before changes are merged.
+
+### Conclusion: GitHub Actions CI
+
+Integrating GitHub Actions with Git automates the testing process and improves code reliability. Running tests on feature branches and pull requests helps detect defects early, supports faster development, and establishes a foundation for future automated deployment.
+
+![Sreenshot-4](Screenshot-4.png)
+
+## GitHub Actions CI/CD Pipeline for Node.js on AWS
+
+1. Overview
+This pipeline automates testing, code quality checks, and deployment of a Node.js application to an AWS staging environment using GitHub Actions.
+
+Pipeline workflow:
+
+1. Developer pushes code or opens a pull request.
+2. GitHub Actions installs dependencies.
+3. Unit tests run automatically.
+4. ESLint, Prettier, and dependency vulnerability checks execute.
+5. If all checks pass on main, the application is built and deployed to AWS.
+6. A health check verifies the staging deployment.
+The example below uses Amazon ECS with Fargate and Amazon ECR.
+
+Create the GitHub Actions workflow
+Create the file .github/workflows/staging.yml in your repository.
+name: Node.js CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Test and Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Check code quality
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+  deploy-staging:
+    name: Deploy to AWS Staging
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        id: image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE_URI="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+          docker build --pull -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+          echo "uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+      - name: Render ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ecs-task-definition.json
+          container-name: ${{ vars.CONTAINER_NAME }}
+          image: ${{ steps.image.outputs.uri }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ vars.ECS_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Verify staging health
+        env:
+          STAGING_URL: ${{ vars.STAGING_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$STAGING_URL"
+          curl --fail --silent --show-error \
+            --retry 12 \
+            --retry-delay 5 \
+            --retry-connrefused \
+            --max-time 10 \
+            "$STAGING_URL/health"
+
+Note: The workflow assumes that the repository contains a Dockerfile, an ECS task definition, and a /health endpoint. Replace the example action version tags with verified full commit SHAs for hardened production use.
+
+1. Configure Node.js scripts
+Ensure your package.json includes the scripts required by the pipeline.
+{
+  "scripts": {
+    "test": "jest --ci",
+    "lint": "eslint .",
+    "format:check": "prettier --check ."
+  }
+}
+
+Install the development dependencies if necessary:
+npm install --save-dev jest eslint prettier
+
+Commit both package.json and package-lock.json. If the project uses Vitest or another test framework, adjust the test command accordingly.
+
+Configure GitHub Actions variables
+Navigate to GitHub → Settings → Secrets and variables → Actions → Variables and configure the following variables.
+
+Create a GitHub environment named staging under Settings → Environments. Restrict it to the main branch and configure reviewers if deployment approval is required.
+
+Secure AWS authentication with OIDC
+Use GitHub's OpenID Connect integration to authenticate to AWS without storing long-lived access keys.
+
+1. Create the GitHub OIDC identity provider in AWS IAM.
+2. Create a dedicated IAM role for staging deployments.
+3. Restrict the role's trust policy to the specific repository and staging environment.
+4. Grant only the permissions required to publish images to the designated ECR repository and update the intended ECS service.
+5. Set AWS_ROLE_ARN in GitHub Actions variables.
+Example trust policy:
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::AWS_ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:sub": "repo:YOUR_ORG/YOUR_REPO:environment:staging"
+        }
+      }
+    }
+  ]
+}
+
+Replace AWS_ACCOUNT_ID, YOUR_ORG, and YOUR_REPO with the correct values. Configure the role's permissions policy separately, including appropriately restricted iam:PassRole permissions for the ECS task and execution roles.
+6. Verification checklist
+
+- [ ] Unit tests run successfully on every pull request.
+- [ ] ESLint and Prettier checks pass.
+- [ ] Dependency vulnerability checks pass.
+- [ ] Branch protection requires successful quality checks before merging.
+- [ ] AWS authentication works through OIDC.
+- [ ] Docker images are pushed to ECR using the Git commit SHA as the tag.
+- [ ] ECS deploys the updated task definition and reaches a stable state.
+- [ ] The staging health endpoint returns HTTP 2xx.
+- [ ] Failed checks prevent deployment.
+- [ ] A rollback procedure is documented and tested.
+
+Expected result
+Once configured, every pull request targeting main will trigger automated testing and code quality checks. After a successful merge, GitHub Actions will build the container image, publish it to Amazon ECR, deploy it to the ECS staging service, and verify application health.
+
+![Screenshot-5](Screenshot-5.png)
+
+## CI/CD Pipeline Guide
+
+### Overview
+
+The CI/CD pipeline automates code validation and provides a controlled route to production using GitHub Actions.
+
+The pipeline runs tests and builds the application before allowing a production deployment. A failed test or build prevents the deployment job from proceeding.
+
+## How the pipeline works
+
+1. **Pull request:** The pipeline installs dependencies, runs lint checks, executes tests, and builds the application.
+2. **Merge to main:** The pipeline runs the same validation against the updated main branch.
+3. **Manual production release:** An authorised developer starts the workflow from the main branch. The production deployment job runs only after validation succeeds.
+4. **Deployment protection:** GitHub environment rules can require approval before production deployment begins.
+5. **Verification:** Confirm the deployment completed successfully and the application health checks pass.
+
+## How to run tests
+
+### Automatically
+
+Create a feature branch, make a change, and open a pull request targeting `main`. GitHub Actions starts the workflow automatically.
+
+### Manually
+
+1. Open the repository on GitHub.
+2. Select **Actions**.
+3. Select **CI/CD Pipeline**.
+4. Click **Run workflow**.
+5. Select the `main` branch and start the workflow.
+
+Inspect the job logs to identify failed tests, lint errors, or build problems.
+
+### Locally
+
+Run the following commands from the project root:
+
+npm ci
+npm test
+npm run build
+
+If linting is configured, also run:
+
+npm run lint
+
+## How to deploy new code
+
+1. Create a feature branch.
+2. Implement the change and add or update tests.
+3. Commit and push your changes.
+4. Open a pull request and resolve all failing checks.
+5. Merge into `main` after review and required checks pass.
+6. Open Actions and manually run the CI/CD Pipeline using `main`.
+7. Approve the production deployment if the environment requires approval.
+8. Confirm the deployment succeeded and verify the application is healthy.
+
+The deployment command must be configured for the project's actual hosting provider before this process can deploy application code.
+
+## Troubleshooting
+
+- **Dependencies fail:** Check the lockfile and ensure `package.json` and the lockfile are committed.
+- **Tests fail:** Reproduce the failure locally, fix the code, and push a new commit.
+- **Build fails:** Check build logs, environment variables, and compiler errors.
+- **Deployment does not run:** Confirm the workflow was manually started on `main` and the test job succeeded.
+- **Approval is pending:** Ask an authorised environment reviewer to approve the deployment.
+- **Application is unhealthy:** Follow the hosting platform's rollback procedure and investigate the deployment logs.
+
+## Security and maintenance
+
+- Never store credentials in source code.
+- Use least-privilege repository and cloud permissions.
+- Require code review and successful CI checks before merging.
+- Restrict production deployments to authorised branches and users.
+- Keep dependencies and GitHub Actions updated.
+- Review deployment logs and periodically test rollback procedures.
+
+## Operational ownership
+
+The repository maintainers are responsible for maintaining workflow configuration, test coverage, deployment credentials, environment protection, and release procedures.
+
+## Task 4: Enforce Security Best Practices in Git
+
+## Security Objective
+
+Secure the Git repository by implementing access controls, SSH key management, branch protection, signed commits, and sensitive data protection.
+
+## 1. Set Up User Access Controls
+
+- Grant users only the permissions required for their roles.
+- Enable multi-factor authentication (MFA).
+- Assign permissions using teams or groups.
+- Remove access for users who no longer work on the project.
+- Never share user accounts, passwords, or access tokens.
+
+For GitHub:
+
+1. Open the repository.
+2. Navigate to **Settings → Collaborators** or organization access settings.
+3. Add authorized team members.
+4. Assign appropriate permissions.
+
+## 2. Configure SSH Keys
+
+### Generate an SSH key
+
+`ssh-keygen -t ed25519 -C "your-email@example.com"`
+
+### Start the SSH agent and add the key
+
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+### Display the public key
+
+cat ~/.ssh/id_ed25519.pub
+
+Add the public key to your Git hosting account under **Settings → SSH keys**. Never share your private key.
+
+### Test SSH authentication
+
+`ssh -T git@github.com`
+
+### Configure the repository to use SSH
+
+`git remote set-url origin git@github.com:ORG/REPOSITORY.git`
+`git remote -v`
+
+Replace `ORG/REPOSITORY` with your repository details.
+
+## 3. Enable Branch Protection
+
+Protect the `main` branch to prevent unauthorized changes.
+
+For GitHub:
+
+1. Open **Settings → Rules → Rulesets**.
+2. Create a branch ruleset targeting `main`.
+3. Enable the following rules:
+   - Require pull requests before merging.
+   - Require at least one approving review.
+   - Dismiss stale approvals when new commits are pushed.
+   - Require status checks to pass.
+   - Require conversations to be resolved.
+   - Block force pushes.
+   - Prevent branch deletion.
+   - Require signed commits where supported.
+
+### Create a CODEOWNERS file
+
+Create `.github/CODEOWNERS`:
+
+text
+/src/security/ @ORG/security-team
+/.github/workflows/ @ORG/platform-team
+/infra/ @ORG/platform-team
+
+Replace the example team names with your actual organization teams. Configure branch protection to require code owner approval.
+
+## 4. Enable Signed Commits
+
+Signed commits help verify the authenticity of commits.
+
+### Configure SSH commit signing
+
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --global commit.gpgsign true
+
+Register the public key as a signing key in your Git hosting account.
+
+### Create a signed commit
+
+git add .
+git commit -S -m "Apply security improvements"
+
+### Verify the commit signature
+
+git log -1 --show-signature
+
+Configure the hosting platform to require signed commits on protected branches. Local Git settings alone do not enforce this requirement for other contributors.
+
+## 5. Protect Sensitive Data
+
+Create or update the `.gitignore` file:
+
+  .env
+  .env.*
+  !.env.example
+  *.pem
+  *.key
+  secrets/
+  credentials.json
+
+Do not commit passwords, API keys, private keys, or production credentials.
+
+Additional measures:
+
+- Enable secret scanning and push protection where available.
+- Store credentials in a secrets manager or CI/CD secret store.
+- Rotate any credentials accidentally exposed in Git history.
+- Remember that removing a secret in a later commit does not remove it from earlier commits.
+
+## 6. Verify Security Settings
+
+Use the following checklist:
+
+- [ ] User access permissions are configured.
+- [ ] MFA is enabled where required.
+- [ ] SSH keys are registered and tested.
+- [ ] The `main` branch is protected.
+- [ ] Pull requests require approval.
+- [ ] CI checks must pass before merging.
+- [ ] Signed commits are verified.
+- [ ] Secret scanning is enabled where available.
+- [ ] Sensitive files are excluded using `.gitignore`.
+
+## Expected Outcome
+
+The repository is more secure because:
+
+- Only authorized users can access and modify the codebase.
+- SSH keys provide secure authentication.
+- Branch protection prevents unauthorized direct changes.
+- Signed commits improve commit authenticity verification.
+- Secret management reduces the risk of exposing confidential information.
+
+**Conclusion:** These Git security best practices help protect the repository, enforce controlled collaboration, and improve the integrity of critical code changes.
