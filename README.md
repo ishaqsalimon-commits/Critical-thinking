@@ -1234,3 +1234,279 @@ The repository is more secure because:
 - Secret management reduces the risk of exposing confidential information.
 
 **Conclusion:** These Git security best practices help protect the repository, enforce controlled collaboration, and improve the integrity of critical code changes.
+
+![Screenshot-6](Screenshot-6.png)
+
+## 1. Ensure Code Changes Are Auditable
+
+Implement a mechanism for auditing code changes so that all modifications can be tracked, reviewed, and verified.
+
+### Requirements
+
+- **Version Control:** Use Git or an equivalent system to record all code changes, authors, timestamps, and commit messages.
+- **Code Reviews:** Require peer review and approval before merging changes into protected branches.
+- **Audit Logs:** Maintain secure records of code modifications, approvals, merges, and deployments.
+- **Automated Verification:** Run automated tests, code quality checks, and security scans before deployment.
+- **Access Control:** Restrict repository access and enforce appropriate authentication and authorisation.
+- **Traceability:** Link code changes to relevant requirements, tasks, and releases.
+- **Log Protection:** Prevent unauthorised modification or deletion of audit records.
+
+### Acceptance Criteria
+
+- Every code change is attributable to an authenticated user.
+- All changes are recorded with timestamps and relevant metadata.
+- Production changes require documented review and approval.
+- Audit logs are protected against unauthorised tampering.
+- Changes can be traced from commit through review, testing, and deployment.
+- Historical changes and their associated approvals can be retrieved and verified.
+
+**Expected Outcome:** A reliable and verifiable audit trail that ensures accountability, code integrity, and compliance.
+
+## Deliverable: Git Repository Security Best Practices
+
+## 1. Objective
+
+Implement security best practices in the Git repository to prevent unauthorised access, protect code integrity, and ensure all code changes can be tracked, reviewed, and verified.
+
+## 2. Access Controls
+
+- Restrict repository access to authorised users.
+- Apply the principle of least privilege by assigning appropriate read, write, and administrative permissions.
+- Limit administrative access to trusted maintainers.
+- Enable multi-factor authentication (MFA) where supported.
+- Review user permissions regularly and revoke access when it is no longer required.
+
+**Security Benefit:** Access controls reduce the risk of unauthorised modifications and help protect the codebase from compromised accounts.
+
+## 3. Branch Protection
+
+Configure branch protection rules for critical branches, such as `main` and `develop`.
+
+- Require pull requests before merging changes.
+- Require at least one approval from an authorised reviewer.
+- Require automated tests and status checks to pass before merging.
+- Restrict direct pushes and force pushes to protected branches.
+- Prevent accidental deletion of protected branches.
+- Require conversations and review comments to be resolved before merging, where supported.
+
+**Security Benefit:** Branch protection ensures that code changes are reviewed and tested before integration, reducing the risk of introducing vulnerabilities or breaking existing functionality.
+
+## 4. Commit Signing
+
+Configure Git to sign commits using GPG or SSH signing keys.
+
+Example configuration using SSH signing:
+
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --global commit.gpgsign true
+
+Create a signed commit:
+
+git commit -S -m "Implement security improvements"
+
+Verify a commit signature:
+
+git verify-commit HEAD
+
+- Register the appropriate signing key with the Git hosting platform.
+- Verify commit signatures before accepting changes into protected branches.
+- Enable signed-commit enforcement where supported.
+- Protect private signing keys and revoke compromised keys immediately.
+
+**Security Benefit:** Commit signing helps verify the authenticity and integrity of commits, making unauthorised alterations easier to detect.
+
+## 5. Audit and Monitoring
+
+- Maintain records of code changes, pull requests, approvals, and deployments.
+- Use Git history to track who made changes and when.
+- Enable repository audit logs where available.
+- Run automated tests, dependency checks, and security scans through CI/CD pipelines.
+- Periodically review repository permissions and security configurations.
+- Protect audit logs against unauthorised modification or deletion.
+
+**Security Benefit:** Audit logging provides traceability and supports investigations into suspicious activity or unauthorised changes.
+
+## 6. Verification Checklist
+
+- [ ] Repository access is restricted to authorised users.
+- [ ] Administrative privileges are limited to trusted maintainers.
+- [ ] Branch protection rules are enabled for critical branches.
+- [ ] Pull requests and required code reviews are enforced.
+- [ ] Automated status checks must pass before merging.
+- [ ] Direct pushes and force pushes are restricted.
+- [ ] Commit signing is configured for contributors.
+- [ ] Signed commits are verified and enforced where supported.
+- [ ] Audit logs are available and protected.
+- [ ] Security settings are reviewed periodically.
+
+## 7. Expected Outcome
+
+These controls provide multiple layers of protection for the Git repository. Access controls restrict who can modify the codebase, branch protection ensures changes are reviewed and validated, and commit signing provides a mechanism for verifying commit authenticity and integrity.
+
+Together, these practices improve accountability, reduce the risk of unauthorised modifications, and establish a reliable audit trail for code changes.
+
+## 8. Evidence of Implementation
+
+Provide the following evidence to demonstrate completion:
+
+- Screenshots or exported settings showing repository permissions.
+- Evidence of enabled branch protection rules.
+- Git configuration output demonstrating commit-signing settings.
+- Examples of signed commits with successful signature verification.
+- Evidence that unapproved changes cannot bypass branch protection.
+- Relevant audit logs and CI/CD security reports.
+
+**Note:** The configuration must be applied and tested in the actual repository. This document describes the required security practices but does not, by itself, confirm that they have been implemented.
+
+![Sreenshot-7](Screenshot-7.png)
+
+## Task 5: Handle a Real-World Git Challenge
+
+### Scenario
+
+Two developers were working on separate branches and accidentally introduced conflicting changes into the main branch after a failed merge. This caused inconsistencies in the codebase and potentially broke the application.
+
+Objective: Resolve the merge conflict, restore code integrity, verify the solution, and identify preventive measures to avoid similar issues in the future.
+
+### Step-by-Step Resolution
+
+### Step 1: Check the Git Repository Status
+
+First, inspect the repository to determine whether a merge is still in progress and identify the affected files.
+git status
+git branch
+git log --oneline --graph --all -15
+
+- git status shows unresolved conflicts and the current repository state.
+- git branch lists the available local branches.
+- git log displays recent commits and branch history.
+
+### Step 2: Identify the Conflicting Files
+
+Run the following commands to locate unresolved conflicts:
+git diff
+git diff --name-only --diff-filter=U
+
+#### Open the conflicting files and look for Git conflict markers
+
+The two developers implemented different calculations. One applies a 20% increase, while the other adds a fixed 20 units. The correct implementation must be determined from the project requirements.
+
+### Step 3: Resolve the Merge Conflict
+
+Discuss the intended functionality with both developers and modify the file accordingly.
+
+For example, if the requirement is to apply a 20% increase, the corrected code would be:
+function calculateTotal(price) {
+    return price * 1.2;
+}
+
+Remove all conflict markers and save the file.
+
+Stage the resolved file:
+git add path/to/conflicted-file.js
+
+Repeat this process for every conflicting file.
+
+### Step 4: Complete or Abort the Failed Merge
+
+If the merge is still in progress and all conflicts have been resolved, continue the merge:
+git merge --continue
+
+If the merge must be abandoned instead, use:
+git merge --abort
+
+The abort command attempts to restore the repository to its pre-merge state. Preserve uncommitted work before running it.
+
+If the failed merge has already been committed and pushed to main, inspect the commit history before deciding how to recover. Reverting a merge commit may be appropriate:
+git revert -m 1 MERGE_COMMIT_HASH
+
+Use this command only after confirming that the first parent represents the intended mainline. Avoid resetting shared branch history without team agreement.
+
+### Step 5: Test the Resolved Code
+
+Check for whitespace errors and inspect the repository status:
+git diff --check
+git status
+
+For a Node.js project, run the following commands if they are supported by the project:
+npm ci
+npm test
+npm run build
+
+These commands install dependencies, run tests, and build the application.
+
+You can also test the corrected function with representative inputs:
+console.assert(calculateTotal(100) === 120);
+console.assert(calculateTotal(50) === 60);
+
+These tests assume the agreed requirement is a 20% increase.
+
+### Step 6: Commit and Push the Fix
+
+After resolving the conflicts and verifying the code, stage and commit the changes:
+git add .
+git commit -m "fix: resolve merge conflicts"
+
+Before using git add ., check git status to ensure that unrelated files and sensitive information are not included.
+
+If the repository permits direct pushes to main, push the changes:
+git push origin main
+
+Otherwise, submit the fix through a pull request and follow the repository's review and approval process.
+
+Finally, verify the commit history:
+git log --oneline --graph -10
+
+### Preventive Measures
+
+The team can prevent similar problems by adopting the following practices.
+
+Feature branch: Keep unfinished work separate from main.
+Pull requests: Review changes before merging them into the main branch.
+Branch protection: Prevent unauthorized direct pushes and enforce required checks.
+Automated testing: Run tests and builds before merging changes.
+Frequent synchronization: Keep feature branches up to date with main.
+Small commits: Make changes easier to review, test, and revert.
+Team communication: Coordinate when developers modify the same files.
+Continuous integration: Automatically validate proposed changes before integration.
+
+### Recommended Git Workflow
+
+1. Create a feature branch from the latest main.
+2. Develop and commit changes on the feature branch.
+3. Open a pull request for review.
+4. Resolve conflicts and run automated tests.
+5. Obtain the required approvals.
+6. Merge the verified changes into main.
+Example commands:
+git switch main
+git pull --ff-only origin main
+git switch -c feature/new-functionality
+
+Before submitting a pull request, synchronize the feature branch with the latest main:
+git fetch origin
+git merge origin/main
+
+Resolve any conflicts, run tests, and push the feature branch:
+git add .
+git commit -m "fix: resolve merge conflicts"
+git push -u origin feature/new-functionality
+
+The team can then open a pull request and merge the changes after the required reviews and automated checks pass.
+
+## Merge Conflict Resolution Outcome
+
+After completing the task, the team should have:
+
+- Resolved all merge conflicts without leaving conflict markers in the code.
+- Preserved the intended functionality of the developers' changes.
+- Verified the code using automated tests and build checks.
+- Restored a consistent and reliable codebase.
+- Established preventive practices to reduce future merge conflicts.
+
+### Conclusion: Merge Conflict Resolution
+
+Git merge conflicts are a common challenge in collaborative software development. They can be resolved by inspecting the repository state, identifying conflicting changes, agreeing on the correct implementation, and testing the resulting code.
+
+To prevent future issues, the team should use feature branches, pull requests, code reviews, branch protection, and automated testing. These practices help maintain code integrity and ensure that only verified changes are integrated into the main branch.
