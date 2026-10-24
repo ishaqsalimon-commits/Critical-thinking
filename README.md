@@ -266,3 +266,450 @@ CI/CD integration: Automate builds, tests, and deployments through approved pipe
 Backup and recovery: Maintain protected backups and periodically test repository restoration.
 
 Developer training: Provide documentation and practical training for Git workflows and conflict resolution.
+
+#### Conclusion
+
+Git is the recommended version control system for the company's transition to distributed software development. Compared with a centralized system such as SVN, Git provides offline development, fast local operations, flexible branching, and strong integration with modern DevOps practices.
+
+Mercurial also offers distributed development capabilities, but Git's wider ecosystem makes it a practical choice for a team seeking scalable collaboration and automation.
+
+Successful adoption will depend not only on selecting Git but also on establishing secure repository hosting, consistent branching policies, mandatory code reviews, automated quality checks, developer training, and reliable backup procedures. These practices will help the organization build a secure, maintainable, and scalable SCM process for its distributed workforce.
+
+Git Workflow for Feature Branching and a Stable Main Branch
+For a new web application, a feature-branching workflow allows developers to work on multiple features independently while keeping the main branch stable and production-ready.
+
+1. Branching strategy
+
+Use the following branch structure:
+main
+
+Stable, production-ready code
+
+Create feature branches
+
+feature/login
+
+Developer A works on authentication.
+
+feature/dashboard
+
+Developer B works on the dashboard.
+
+Pull requests, code reviews and automated tests
+
+Merge into main
+
+Only after required checks pass
+
+1. Implement the Git workflow
+Step 1: Create the repository
+git init
+git add .
+git commit -m "chore: initial project setup"
+
+git branch -M main
+git remote add origin YOUR_REPOSITORY_URL
+git push -u origin main
+
+Replace `<repository-url>` with the URL of your remote repository, such as a GitHub repository.
+Step 2: Create a feature branch
+Each developer creates a separate branch from the latest main branch.
+git switch main
+git pull origin main
+
+git switch -c feature/login
+
+Another developer can work independently:
+git switch main
+git pull origin main
+
+git switch -c feature/dashboard
+
+Use descriptive branch names such as feature/user-profile, fix/login-error, or feature/payment-integration.
+Step 3: Develop and commit changes
+Developers commit their changes to their own branches rather than directly to main.
+git add .
+git commit -m "feat: implement login functionality"
+git push -u origin feature/login
+
+For the dashboard developer:
+git add .
+git commit -m "feat: implement dashboard layout"
+git push -u origin feature/dashboard
+
+Make small, focused commits with meaningful messages.
+Step 4: Open a pull request
+Once the feature is complete:
+
+1. Open a pull request from the feature branch into main.
+2. Request a review from another developer.
+3. Run automated tests, linting and build checks.
+4. Address review comments and push any required changes.
+5. Merge the pull request only when all required checks pass.
+Step 5: Protect the main branch
+Configure branch protection rules in GitHub, GitLab or your chosen Git hosting service.
+
+Recommended settings:
+
+- Require pull requests before merging.
+- Require at least one approving code review.
+- Require automated CI checks to pass.
+- Require the branch to be up to date with the target branch, if appropriate.
+- Block force pushes and deletion of main.
+- Restrict direct pushes to main.
+
+These rules help prevent incomplete or broken code from entering the stable branch.
+
+Step 6: Update the feature branch
+If another developer merges changes into main while your feature is in progress, incorporate those changes regularly.
+git switch feature/login
+git fetch origin
+git merge origin/main
+
+Resolve any merge conflicts, run the tests again, and push the updated branch.
+Step 7: Clean up after merging
+After the pull request is merged, update your local repository and delete the completed feature branch.
+git switch main
+git pull origin main
+
+git branch -d feature/login
+git fetch --prune
+
+The remote feature branch can also be deleted through the hosting platform or, if necessary, using:
+git push origin --delete feature/login
+
+1. Automate testing with CI
+Automate testing with CI
+Configure a continuous integration (CI) pipeline to run on every pull request. For example, a GitHub Actions workflow for a Node.js web application might look like this:
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --run
+
+      - name: Build application
+        run: npm run build
+
+This example assumes the project has a package-lock.json, a test script compatible with npm test -- --run, and a build script. Adjust the commands to match the project's framework and test runner. The required CI check must be configured in the repository's branch protection settings.
+
+![Screenshot-1](Screenshot-1.png)
+![Screenshot-2](Screenshot-2.png)
+![Screenshot-3](Screenshot-3.png)
+
+## Team Git Workflow Guide
+
+**Project:** Web Application Development  
+**Version:** 1.0
+
+## 1. Purpose
+
+This guide establishes a consistent Git workflow that enables developers to work on multiple features simultaneously while maintaining a stable, reliable `main` branch.
+
+The workflow supports parallel development, code reviews, automated testing, conflict resolution, and effective collaboration among team members working from different locations and time zones.
+
+## 2. Branching Strategy
+
+The team will use a **feature-branch workflow** with `main` as the primary integration branch.
+
+### 2.1 Main Branch
+
+- `main` must always contain stable, reviewed, and tested code.
+- Direct pushes to `main` are prohibited.
+- All changes must be submitted through pull requests.
+- Required automated checks and code reviews must pass before merging.
+- Releases should be created from verified commits on `main`, using tags where appropriate.
+
+### 2.2 Feature Branches
+
+Each feature, bug fix, or maintenance task should have its own branch created from the latest `main`.
+
+Branch names should be descriptive, concise, and related to a task or issue identifier when applicable.
+
+### 2.3 Creating a Feature Branch
+
+Developers should begin by updating their local `main` branch:
+
+git switch main
+git pull --ff-only origin main
+git switch -c feature/user-login
+
+Work should be committed to the feature branch rather than directly to `main`.
+
+git add .
+git commit -m "feat: implement user login"
+git push -u origin feature/user-login
+
+Developers should push their branches regularly so that their work is backed up and accessible to teammates.
+
+## 3. Daily Development Workflow
+
+The team will follow this sequence:
+
+1. Select a task from the project board.
+2. Create a feature branch from the latest `main`.
+3. Implement the feature and commit changes incrementally.
+4. Run relevant tests and checks locally.
+5. Push the branch to the shared repository.
+6. Open a pull request when the changes are ready for review.
+7. Address review feedback and resolve conflicts.
+8. Merge after approval and successful CI checks.
+9. Delete the completed branch and update the local repository.
+
+Developers should keep branches focused on one task wherever possible. Large features should be divided into smaller, reviewable changes.
+
+## 4. Pull Request Procedure
+
+Pull requests (PRs) are the standard method for proposing and reviewing changes before they enter `main`.
+
+### 4.1 Opening a Pull Request
+
+Each pull request should include:
+
+- A clear title describing the change.
+- A summary of what was implemented and why.
+- A reference to the relevant issue or task.
+- Testing performed and the results.
+- Screenshots or recordings for significant user-interface changes, where useful.
+- Any risks, migration requirements, or configuration changes.
+
+The PR description should help reviewers understand the change without requiring extensive additional explanation.
+
+### 4.2 Code Review Requirements
+
+Reviewers should verify that:
+
+- The implementation meets the task requirements.
+- Code is readable, maintainable, and consistent with team conventions.
+- Tests cover the important new behaviour.
+- Existing functionality has not been unintentionally broken.
+- Security, performance, accessibility, and error handling have been considered where relevant.
+- Documentation and configuration are updated when necessary.
+
+At least one approval from another developer is required before merging. Higher-risk changes may require additional reviewers.
+
+Authors should respond constructively to feedback, explain design decisions when necessary, and push revisions to the same branch. Reviewers should focus on the code and its impact rather than personal preferences.
+
+### 4.3 Automated Checks
+
+Every pull request targeting `main` must pass the project's required continuous integration (CI) checks, including applicable:
+
+- Unit and integration tests.
+- Linting and formatting checks.
+- Type checking.
+- Production builds.
+- Security or dependency checks, where configured.
+
+The pull request must not be merged if a required check fails. Failures should be investigated and corrected before approval or merging.
+
+### 4.4 Merging a Pull Request
+
+Once the required reviews and checks have passed:
+
+1. Confirm that the pull request is ready to merge.
+2. Resolve outstanding review comments and conversations.
+3. Ensure the branch is sufficiently up to date with `main`.
+4. Use the team's agreed merge method.
+5. Delete the feature branch after merging, unless it is intentionally retained.
+
+## 5. Merging and Rebasing Best Practices
+
+Merging and rebasing both integrate changes, but they have different effects on Git history.
+
+### 5.1 Merge
+
+A merge combines the histories of two branches and may create a merge commit.
+
+git switch feature/user-login
+git fetch origin
+git merge origin/main
+
+If conflicts occur, resolve them in the affected files, test the result, and complete the merge.
+
+**Use merging when:**
+
+- Integrating changes from `main` into a shared feature branch.
+- Preserving the history of parallel development is important.
+- Multiple developers are collaborating on the same branch.
+
+Advantages:
+
+- Preserves existing commit history.
+- Does not rewrite existing commits.
+- Makes branch integration points explicit.
+
+### 5.2 Rebase
+
+Rebasing replays commits on top of another base commit, producing a more linear history.
+
+git switch feature/user-login
+git fetch origin
+git rebase origin/main
+
+If conflicts occur, resolve each affected file and continue:
+
+git add `<resolved-file>`
+git rebase --continue
+
+To abandon the rebase and return to the original branch state:
+
+git rebase --abort
+
+After rebasing a branch that has already been pushed, its commit history may differ from the remote branch. If the branch is exclusively owned by the developer and the team permits rewriting it, update the remote using:
+
+git push --force-with-lease
+
+Never use `git push --force` indiscriminately. Do not rebase shared branches that other developers rely on without explicit coordination.
+
+**Use rebasing when:**
+
+- Updating a private feature branch with the latest `main`.
+- Cleaning up local commits before sharing them, when appropriate.
+- Preparing a focused, easy-to-review commit history.
+
+Advantages:
+
+- Produces a more linear history.
+- Can make the sequence of changes easier to follow.
+- Avoids unnecessary merge commits during routine feature development.
+
+### 5.3 Team Policy for Integration
+
+The team will adopt the following defaults:
+
+- **Feature branch maintenance:** Rebase private feature branches onto the latest `main` when a linear history is desirable.
+- **Shared feature branches:** Prefer merging `main` into the branch to avoid rewriting commits that teammates may already have fetched.
+- **Pull request integration:** Use squash merging for independent feature branches to keep `main` concise, unless preserving individual commits or explicit merge history is important.
+- **Main branch:** Never rebase or force-push `main`.
+- **Conflict resolution:** Resolve conflicts deliberately, inspect the final diff, and rerun relevant tests.
+
+The repository should configure one preferred merge method so the team follows a predictable convention.
+
+## 6. Handling Merge Conflicts
+
+Merge conflicts occur when Git cannot automatically reconcile competing changes.
+
+The developer integrating the changes is responsible for resolving conflicts correctly.
+
+Recommended procedure:
+
+1. Fetch the latest remote changes.
+2. Merge or rebase the target branch into the feature branch.
+3. Inspect each conflicted file.
+4. Discuss ambiguous changes with the affected teammate.
+5. Remove conflict markers and preserve the intended behaviour of both changes.
+6. Run tests, linting, and builds as appropriate.
+7. Commit the resolution if merging, or continue the rebase if rebasing.
+8. Push the updated branch and rerun the required CI checks.
+
+Developers must not resolve conflicts by blindly accepting one side's changes. When the correct result is unclear, they should consult the original authors.
+
+## 7. Collaboration in a Distributed Team
+
+This workflow supports distributed collaboration by making work visible, traceable, and independently reviewable.
+
+### 7.1 Asynchronous Communication
+
+Developers should use pull requests, issue trackers, and team communication channels to document progress and decisions. Work should not depend on everyone being online simultaneously.
+
+PR descriptions and review comments should provide enough context for colleagues in other time zones to continue the work without waiting for a meeting.
+
+### 7.2 Shared Ownership and Visibility
+
+Pushing feature branches to a shared remote repository gives teammates access to ongoing work. Draft pull requests allow early feedback before a feature is complete.
+
+Branch names, commits, issue references, and PR descriptions create a traceable record of why changes were made and who reviewed them.
+
+### 7.3 Reducing Integration Conflicts
+
+Developers should:
+
+- Keep branches short-lived.
+- Integrate changes from `main` regularly.
+- Divide large tasks into smaller, independent features.
+- Communicate when multiple people must modify the same files or modules.
+- Coordinate API, database, and shared-component changes before implementation.
+- Avoid leaving completed work unreviewed for long periods.
+
+### 7.4 Review Responsibilities
+
+Reviewers should acknowledge requests promptly and communicate expected review timelines. Authors should identify blocking questions clearly and avoid treating review feedback as personal criticism.
+
+For handovers between time zones, developers should document what has changed, what remains unfinished, any known issues, and the next required action.
+
+### 7.5 Access and Security
+
+All developers should use individual repository accounts with appropriate permissions. Credentials, access tokens, passwords, and other secrets must never be committed to Git.
+
+Protected branches and required CI checks should be enforced centrally rather than relying on every developer to remember the rules.
+
+## 8. Emergency Fixes
+
+For urgent production issues:
+
+1. Create a `hotfix/description` branch from the relevant production baseline, normally `main`.
+2. Implement the smallest safe correction.
+3. Add or update regression tests.
+4. Obtain expedited peer review and run required checks.
+5. Merge the approved fix into `main`.
+6. Deploy according to the team's release process.
+7. Verify the fix in production and communicate the outcome.
+8. If the fix was made against a different release branch, ensure it is also incorporated into `main` and any other affected maintained branches.
+
+Emergency procedures should accelerate review, not eliminate essential safety checks.
+
+## 9. Git Commands Reference
+
+| Update local main | `git switch main && git pull --ff-only origin main` |
+| Create feature branch | `git switch -c feature/my-feature` |
+| Stage changes | `git add .` |
+| Commit changes | `git commit -m "feat: describe change"` |
+| Push branch | `git push -u origin feature/my-feature` |
+| Fetch remote changes | `git fetch origin` |
+| Merge main into feature | `git merge origin/main` |
+| Rebase feature onto main | `git rebase origin/main` |
+| Inspect status | `git status` |
+| Inspect changes | `git diff` |
+| List branches | `git branch -a` |
+| Delete merged local branch | `git branch -d feature/my-feature` |
+
+## 10. Summary and Team Commitments
+
+All team members are expected to follow these principles:
+
+1. Develop features on separate branches.
+2. Keep `main` stable and protected.
+3. Submit changes through pull requests.
+4. Require code review and successful automated checks.
+5. Choose merge or rebase based on the branch's ownership and the team's agreed policy.
+6. Resolve conflicts carefully and test the result.
+7. Communicate progress and decisions clearly across time zones.
+8. Keep branches focused, short-lived, and regularly integrated.
+9. Never commit secrets or force-push to `main`.
+10. Maintain an auditable record of changes, reviews, and releases.
+
+**Expected outcome:** The team can develop multiple features in parallel, integrate changes predictably, reduce avoidable conflicts, and maintain a stable main branch. A shared, documented process also allows distributed developers to collaborate asynchronously while preserving code quality, accountability, and delivery consistency.
