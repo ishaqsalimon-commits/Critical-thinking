@@ -1,7 +1,7 @@
-Software Configuration Management (SCM): Evaluation and Git Workflow
-Purpose: Evaluate centralized and distributed version control systems and recommend an SCM approach for a geographically distributed development team.
+# Software Configuration Management (SCM): Evaluation and Git Workflow
+## Purpose: Evaluate centralized and distributed version control systems and recommend an SCM approach for a geographically distributed development team.
 
-Contents
+### Contents
 1. Introduction
 2. Centralized vs. Distributed Version Control
 3. SVN, Git, and Mercurial Compared
@@ -20,7 +20,7 @@ This document evaluates Subversion (SVN), Git, and Mercurial to identify a suita
 2.1 Centralized Version Control System (CVCS)
 A centralized version control system stores the primary repository on a central server. Developers connect to that server to check out files, commit changes, and retrieve updates.
 
-Example: Subversion (SVN)
+#### Example: Subversion (SVN)
 
 Key characteristics
 - A central repository acts as the primary source of truth.
@@ -42,7 +42,7 @@ Challenges
 2.2 Distributed Version Control System (DVCS)
 A distributed version control system gives each developer a local repository containing the project's version history. Developers can commit changes locally and synchronize them with remote repositories when needed.
 
-Examples: Git and Mercurial
+#### Examples: Git and Mercurial
 
 Key characteristics
 - Each clone contains the repository's commit history.
@@ -69,14 +69,13 @@ SVN (Subversion)	Centralized	A central server stores repository history. Develop
 Git	Distributed	Every clone contains repository history. Developers can commit, branch, compare changes, and inspect history locally, then synchronize with a remote repository.
 Mercurial	Distributed	Each clone has its own repository history. It supports local commits, branching, merging, and synchronization with remote repositories.
 
-
-Git vs. Mercurial
+#### Git vs. Mercurial
 Git and Mercurial are both mature distributed version control systems. Both support offline commits, repository cloning, branching, merging, and collaborative development.
 
 Git is the stronger candidate for this organization primarily because of its broad industry adoption, extensive integration ecosystem, and compatibility with commonly used code-hosting and DevOps platforms.
 
 Mercurial remains a technically capable alternative and may be appropriate for teams already using it successfully. The organization should compare hosting options, automation requirements, team familiarity, and long-term maintenance costs before making a final selection. The choice should be based on operational needs rather than assuming one DVCS is universally superior.
-4. Why Git Fits a Distributed Team
+#### 4. Why Git Fits a Distributed Team
 4.1 Offline Development
 Git allows developers to commit changes, inspect history, create branches, and compare revisions without continuous access to a remote server. This is valuable for team members working in different regions or with unreliable network connections.
 4.2 Efficient Branching and Merging
@@ -90,14 +89,13 @@ release/2.0
 The main branch contains production-ready code. Feature and bug-fix branches isolate work, while a release branch may be used if the team adopts that workflow. Branches can be merged through reviewed pull requests after required checks pass.
 4.3 Improved Collaboration
 Git supports shared repositories, forks, and multiple remotes. These options allow developers to work independently while sharing changes through controlled integration points.
-
 Pull requests or merge requests provide a structured way to review code, discuss implementation decisions, and verify automated test results before merging.
 4.4 Performance and History Management
 Most Git operations are performed locally, reducing dependence on network latency. Git records changes as commits, allowing developers to investigate regressions, compare versions, and revert problematic changes.
 4.5 Integration with DevOps and CI/CD
 Git integrates with platforms and tools such as GitHub, GitLab, Bitbucket, Jenkins, and other CI/CD systems.
 
-Automation can be triggered by commits, pushes, or pull requests to perform:
+#### Automation can be triggered by commits, pushes, or pull requests to perform:
 - Automated unit and integration testing.
 - Code formatting and linting.
 - Static application security testing (SAST).
@@ -107,9 +105,9 @@ Automation can be triggered by commits, pushes, or pull requests to perform:
 These integrations help enforce consistent quality standards across a geographically distributed team.
 4.6 Resilience and Repository Availability
 Each full Git clone contains substantial repository history. This provides useful redundancy if a developer's working copy is lost or a remote server becomes temporarily unavailable.
-
 However, a clone is not a complete replacement for a managed backup strategy. The organization should maintain protected, independently recoverable backups of its authoritative repositories.
-5. Challenges and Mitigations
+
+#### 5. Challenges and Mitigations
 5.1 Learning Curve
 Git's distributed model introduces concepts such as staging, commits, rebasing, merging, remotes, and detached HEAD states. Developers familiar with SVN may need training to use these features safely.
 
@@ -123,6 +121,7 @@ Mitigations
 - Encourage small, focused commits.
 - Require automated tests after conflict resolution.
 - Use code reviews to validate the final changes.
+
 5.3 Poor Branch Management
 Long-lived feature branches can diverge significantly from the main branch, increasing integration risk and delaying feedback.
 
@@ -164,14 +163,14 @@ CI/CD integration	Automate builds, tests, and deployments through approved pipel
 Backup and recovery	Maintain protected backups and periodically test repository restoration.
 Developer training	Provide documentation and practical training for Git workflows and conflict resolution.
 
-
-Conclusion
+### Conclusion
 Git is the recommended version control system for the company's transition to distributed software development. Compared with a centralized system such as SVN, Git provides offline development, fast local operations, flexible branching, and strong integration with modern DevOps practices.
 
 Mercurial also offers distributed development capabilities, but Git's wider ecosystem makes it a practical choice for a team seeking scalable collaboration and automation.
 
 Successful adoption will depend not only on selecting Git but also on establishing secure repository hosting, consistent branching policies, mandatory code reviews, automated quality checks, developer training, and reliable backup procedures. These practices will help the organization build a secure, maintainable, and scalable SCM process for its distributed workforce.
-7. Git Feature-Branch Workflow
+
+### 7. Git Feature-Branch Workflow
 For a new web application, a feature-branching workflow allows developers to work on multiple features independently while keeping the main branch stable and production-ready.
 7.1 Branching Strategy
 Use the following branch structure:
@@ -226,7 +225,7 @@ Once a feature is complete:
 7.6 Step 5 — Protect the main Branch
 Configure branch protection rules in GitHub, GitLab, or the chosen Git hosting service.
 
-Recommended settings
+#### Recommended settings
 - Require pull requests before merging.
 - Require at least one approving code review.
 - Require automated CI checks to pass.
@@ -293,14 +292,13 @@ Finally, configure the required CI check in the repository's branch protection s
 ![Screenshot-2](Screenshot-2.png)
 ![Screenshot-3](Screenshot-3.png)
 
-Team Git Workflow Guide
-Project: Web Application Development
+## Team Git Workflow Guide
+#### Project: Web Application Development
 Version: 1.0
 
-1. Purpose
+#### 1. Purpose
 This guide establishes a consistent Git workflow that enables developers to work on multiple features simultaneously while maintaining a stable, reliable main branch.
 The workflow supports parallel development, code reviews, automated testing, conflict resolution, and effective collaboration among team members working from different locations and time zones.
-
 
 2. Branching Strategy
 The team will use a feature-branch workflow with main as the primary integration branch.
@@ -311,7 +309,6 @@ Direct pushes to main are prohibited.
 All changes must be submitted through pull requests.
 Required automated checks and code reviews must pass before merging.
 Releases should be created from verified commits on main, using tags where appropriate.
-
 
 2.2 Feature Branches
 Each feature, bug fix, or maintenance task should have its own branch created from the latest main.
@@ -527,7 +524,7 @@ Never commit secrets or force-push to main.
 Maintain an auditable record of changes, reviews, and releases.
 Expected outcome: The team can develop multiple features in parallel, integrate changes predictably, reduce avoidable conflicts, and maintain a stable main branch. A shared, documented process also allows distributed developers to collaborate asynchronously while preserving code quality, accountability, and delivery consistency.
 
-Task 3: Automate Code Quality and Deployment
+#### Task 3: Automate Code Quality and Deployment
 1. CI/CD Integration
 Objective
 To ensure code quality and support rapid development, a Continuous Integration/Continuous Deployment (CI/CD) pipeline will be integrated with Git. Automated tests will run whenever a new feature branch is pushed to the remote repository.
@@ -769,7 +766,6 @@ CONTAINER_NAME	Container name in the ECS task definition to update
 ECS_SERVICE	Name of the ECS staging service
 ECS_CLUSTER	Name of the ECS cluster
 STAGING_URL	Base URL for the staging application, including scheme (for example, https://staging.example.com)
-
 
 Create a GitHub environment named staging under Settings → Environments. Restrict it to the main branch and configure reviewers if deployment approval is required.
 5. Secure AWS Authentication with OIDC
